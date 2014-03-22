@@ -1,0 +1,23 @@
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes.dex : \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/R.java.d \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$drawable.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$1.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$id.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$attr.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$Looper$2.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$string.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/BuildConfig.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$2.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$xml.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$Looper$1.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$layout.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$Looper.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/dexedLibs/classes-f8d7c4669fc08e0c04a7b13a24c8b661.jar \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/dexedLibs/classes-05f880f76f6934f2778eed00547d3580.jar \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/dexedLibs/classes-937301e26fff0dc6ad922332174d28d3.jar \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/dexedLibs/slf4j-api-1.7.6-cdc6b5218774ecafe64a355980ed6be1.jar \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/dexedLibs/slf4j-android-1.7.6-39ecf260a50a1a2fe2ecd1db6d6a5b27.jar \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/dexedLibs/xbee-api-0.9-2a789fc1f3dc1ae4dbb4141143e64012.jar \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/dexedLibs/log4j-over-slf4j-1.7.6-2c84a0e9998f66f12bbfd29230a41012.jar \

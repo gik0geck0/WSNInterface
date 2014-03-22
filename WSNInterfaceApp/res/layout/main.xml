@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+    
+    <LinearLayout android:orientation="horizontal"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content">
+	    
+	    <TextView android:id="@+id/target_label"
+	        android:layout_width="wrap_content" 
+	    	android:layout_height="wrap_content" 
+	    	android:text="Target:" />
+	    
+	    <Spinner android:id="@+id/target_spinner"
+	        android:layout_width="wrap_content" 
+	    	android:layout_height="wrap_content" 
+	    	/>
+		
+        <Button
+            android:layout_width="wrap_content" 
+            android:layout_height="wrap_content"
+            android:text="Refresh" 
+            android:id="@+id/refresh" />
+    </LinearLayout>
+
+    <LinearLayout android:orientation="horizontal"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content">
+	    <TextView android:layout_width="fill_parent" 
+	    	android:layout_height="wrap_content" 
+	    	android:layout_weight="1"
+	    	android:text="IOIO Connected?"
+	    	android:id="@+id/is_connected_text" />
+	    <RadioButton android:layout_width="fill_parent"
+	        android:layout_weight="1" 
+	    	android:layout_height="wrap_content" 
+	    	android:enabled="false"
+	    	android:clickable="false"
+	    	android:id="@+id/is_connected" />
+    </LinearLayout>
+
+	<ListView android:layout_width="fill_parent" 
+    	android:layout_height="wrap_content"
+    	android:id="@+id/responses" />
+    
+    <LinearLayout android:orientation="horizontal"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content">
+
+        <EditText
+            android:layout_width="fill_parent" 
+            android:layout_height="wrap_content" 
+            android:hint="Send Command"
+            android:id="@+id/commandentry"/>
+        
+        <Button
+            android:layout_width="wrap_content" 
+            android:layout_height="wrap_content"
+            android:text="Send" 
+            android:id="@+id/send" />
+	</LinearLayout>
+	
+</LinearLayout>
