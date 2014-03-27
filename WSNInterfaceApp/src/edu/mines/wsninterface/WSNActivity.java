@@ -9,6 +9,8 @@ import ioio.lib.util.android.IOIOActivity;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -24,21 +26,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioButton;
+import android.widget.Spinner;
 
 import com.rapplogic.xbee.XBeeConnection;
 import com.rapplogic.xbee.api.AtCommand;
 import com.rapplogic.xbee.api.PacketListener;
 import com.rapplogic.xbee.api.XBee;
-import com.rapplogic.xbee.api.XBeeAddress16;
 import com.rapplogic.xbee.api.XBeeAddress64;
 import com.rapplogic.xbee.api.XBeeException;
 import com.rapplogic.xbee.api.XBeeResponse;
-import com.rapplogic.xbee.api.wpan.RxResponse;
-import com.rapplogic.xbee.api.wpan.RxResponse16;
-import com.rapplogic.xbee.api.wpan.RxResponse64;
 import com.rapplogic.xbee.api.wpan.TxRequest64;
-
-import edu.mines.wsninterface.R;
 
 public class WSNActivity extends IOIOActivity implements PacketListener {
 	private Thread xbnotifier;
@@ -50,6 +47,9 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 
 	private ListView responseView;
 	private ArrayAdapter<String> responseAdapter;
+	
+	private Spinner targetSpinner;
+	private ArrayAdapter<String> targetAdapter;
 
 	private RadioButton isConnected;
 	private Logger logger;
@@ -67,6 +67,11 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 		commandEntry = (EditText) findViewById(R.id.commandentry);
 		sendButton = (Button) findViewById(R.id.send);
 		isConnected = (RadioButton) findViewById(R.id.is_connected);
+		
+		targetSpinner = (Spinner) findViewById(R.id.target_spinner);
+		targetAdapter = new ArrayAdapter<String>(this,
+				android.R.layout.simple_list_item_1);
+		targetSpinner.setAdapter(targetAdapter);
 
 		requestqueue = new ArrayBlockingQueue<String>(10);
 
@@ -84,6 +89,7 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 
 		logger.debug("onCreate finished!");
 		Logger.getLogger(com.rapplogic.xbee.api.XBee.class).setLevel(Level.ALL);
+		Logger.getLogger(com.rapplogic.xbee.api.InputStreamThread.class).setLevel(Level.ALL);
 	}
 
 	@Override
@@ -181,7 +187,6 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 			xbnotifier.start();
 			Log.i("WSNInterface::Setup", "Thread forked");
 
-			xb.addPacketListener(WSNActivity.this);
 
 			try {
 				System.out.println("Initing new provider connection");
@@ -190,9 +195,11 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 				e.printStackTrace();
 			}
 
+			xb.addPacketListener(WSNActivity.this);
 			Log.d("HelloUart::Setup", "XBee API Setup Complete!");
-			isConnected.setChecked(true);
-
+			WSNActivity.this.runOnUiThread(new Runnable() {
+				@Override public void run() {
+					isConnected.setChecked(true); }});
 		}
 
 		/**
@@ -209,25 +216,24 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 				// TODO: Wait till the button is pressed
 				String nextCommand = requestqueue.take();
 				if (nextCommand != null) {
-					/*
-					 * ND: Node Discovery. Example Format looks like: MY SH SL
-					 * DB NI 0001 0013 a200 40a9 a90d 2c 20 00
-					 * 
-					 * MY: 2-byte ID SH: first(highest) 32 bits of the serial
-					 * number SL: last(lowest) 32 bits of serial DB: signal (dB)
-					 * of last good packet NI: Node identifier string
-					 * 
-					 * DH: 0 if using MY as destination SH of target mote DL: MY
-					 * or SL of destination
-					 */
 					Log.d("WSNInterface", ">> " + nextCommand);
 					addResponseToView(">> " + nextCommand);
 
 					if (nextCommand.startsWith("AT")) {
 						xb.sendAsynchronous(new AtCommand(nextCommand
 								.substring(2)));
+                    } else if (nextCommand.startsWith("RAT")) {
+                        // Send a remote AT Command to an MY
+                        // RAT0001MY	// Asks MY 0001 what it's MY is (silly, I know)
+                        String targetMY = nextCommand.substring(3, 7);
+                        xbee.sendAsynchronous(new RemoteAtRequest(
+                                new XBeeAddress16(
+                                        Integer.parseInt(nextCommand.substring(3, 5)),
+                                        Integer.parseInt(nextCommand.substring(5, 7))),
+                                nextCommand.substring(7)));
 					} else {
                         TxRequest64 txr = new TxRequest64(
+                        // TODO: Get the address from the spinner
                         		new XBeeAddress64(0x00, 0x13, 0xA2, 0x00, 0x40, 0xA9, 0xA9, 0x0D),
                                         bytesToInts(nextCommand.getBytes()));
                         xb.sendAsynchronous(txr);
@@ -335,50 +341,133 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 		// 											 __ Checksum
 
 		int[] rawBytes = response.getProcessedPacketBytes();
-		int payloadLength = (rawBytes[0] << 8) + rawBytes[1];
+		// The payload describes everything after the header. Since I use the bytes directly, this is useless
+		// int payloadLength = (rawBytes[0] << 8) + rawBytes[1];
 		int payloadType = rawBytes[2];
+
+		logger.debug("Receive Packet: " + response);
+		logger.debug("Receive Raw Bytes: " + intsToHex(rawBytes));
+		// System.out.println(rawBytes.length + " bytes, and Payload length: " + payloadLength);
 
 		switch (payloadType) {
 
-		case 80:
+		case 0x80:
 			// RxResponse with 64 bit address
 			addResponseToView("<< " 
 					+ arraySubstr(rawBytes, 3, 11)
 					+ " (-" + rawBytes[11] + "dBm)"
 					+ ": " 
-					+ arraySubstr(rawBytes, 13, -1));
+					+ intsToHex(arraySubstr(rawBytes, 13, -1)));
 			break;
 			
-		case 81:
+		case 0x81:
 			// RxResponse with 16 bit address
 			addResponseToView("<< " 
 					+ arraySubstr(rawBytes, 3, 5)
 					+ " (-" + rawBytes[5] + "dBm)"
 					+ ": " 
-					+ arraySubstr(rawBytes, 7, -1));
+					+ intsToHex(arraySubstr(rawBytes, 7, -1)));
 			break;
 			
-		case 82:
+		case 0x82:
 			// Input line states with 64 bit address
 			break;
-		case 83:
+		case 0x83:
 			// Input line states with 16 bit address
 			break;
 		case 0x8a:
 			// Modem status packet
 			break;
-		case 97:
+		case 0x97:
 			// Remote AT Response
+			// 3 == Packet Type
+			// [4,12) == 64 bit addr
+			// [12,14) == 16 bit addr
+			// [14,16) == AT Command Name
+			// [16] == Status
+			// [17,-1) == AT Payload
+				addResponseToView("<<RAT" + Integer.toHexString((rawBytes[12] << 8) + rawBytes[13]) + " "
+					+ (char) rawBytes[14] + (char) rawBytes[15]
+					+ ((rawBytes[16] == 0) ? "OK" : "ERROR")
+					+ ((rawBytes.length > 17) ? intsToHex(arraySubstr(rawBytes, 17, -1)) : ""));
 			break;
 
-		case 88:
+		case 0x88:
 			// Local AT Response
-			addResponseToView("<<AT" + (char) rawBytes[5] + (char) rawBytes[6]
-					+ ((rawBytes[7] == 0) ? "OK" : "ERROR")
-					+ ((payloadLength > 8) ? arraySubstr(rawBytes, 8, -1) : ""));
+			if ((char) rawBytes[4] == 'N' && (char) rawBytes[5] == 'D') {
+                /*
+                 * ND: Node Discovery.
+                 * Response format: MY, SH, SL, DB and NI
+                 * 
+                 * MY: 2-byte ID
+                 * SH: first (highest) 32 bits of the serial number
+                 * SL: last (lowest) 32 bits of serial
+                 * DB: signal (dB) of last good packet
+                 * NI: Node identifier string
+                 * 
+                 * 0001 0013 a200 40a9 a90d 2c 20 00
+                 * ____ MY
+                 * 		_________ SH
+                 * 				  _________ SL
+                 * 							__ DB
+                 * 							   _____ NI (char*)
+                 * 
+                 * 
+                 */
+				final ArrayList<NDResponse> foundNodes = new ArrayList<NDResponse>();
+				// System.out.println("Raw Bytes: " + rawBytes.length);
+				// System.out.println("Packet length: " + payloadLength);
+				
+				int byteIdx = 7;
+				// last byte is the checksum
+				while (byteIdx < rawBytes.length-1) {
+					NDResponse node = new NDResponse();
+					node.setMy((rawBytes[byteIdx]<<8) + rawBytes[byteIdx+1]);
+					byteIdx+=2;
+					
+					byte[] serialBytes = new byte[8];
+					serialBytes[0] = (byte) rawBytes[byteIdx+0];
+					serialBytes[1] = (byte) rawBytes[byteIdx+1];
+					serialBytes[2] = (byte) rawBytes[byteIdx+2];
+					serialBytes[3] = (byte) rawBytes[byteIdx+3];
+					serialBytes[4] = (byte) rawBytes[byteIdx+4];
+					serialBytes[5] = (byte) rawBytes[byteIdx+5];
+					serialBytes[6] = (byte) rawBytes[byteIdx+6];
+					serialBytes[7] = (byte) rawBytes[byteIdx+7];
+					node.setSerial(ByteBuffer.wrap(serialBytes).getLong());
+					byteIdx+=8;
+
+					node.setRssi(rawBytes[byteIdx]);
+					byteIdx++;
+
+					StringBuilder nibuilder = new StringBuilder();
+					while (rawBytes[byteIdx] != 0) {
+						nibuilder.append((char) rawBytes[byteIdx]);
+						byteIdx++;
+					}
+					byteIdx++;
+					node.setNi(nibuilder.toString());
+					foundNodes.add(node);
+					logger.debug("Found node: " + node + " Serial: " + Long.toHexString(node.getSerial()));
+				}
+                if (!foundNodes.isEmpty()) {
+				WSNActivity.this.runOnUiThread(new Runnable() {
+					@Override public void run() {
+						targetAdapter.clear();
+						for (NDResponse nd : foundNodes) {
+							targetAdapter.add(nd.toString());
+						}
+						targetAdapter.notifyDataSetChanged();
+					}});
+                }
+			} else {
+				addResponseToView("<<AT" + (char) rawBytes[4] + (char) rawBytes[5]
+					+ ((rawBytes[7] == 0) ? " " : " ERROR ")	// Say nothing on success
+					+ ((rawBytes.length > 8) ? intsToHex(arraySubstr(rawBytes, 8, -1)) : ""));
+			}
 			break;
 
-		case 89:
+		case 0x89:
 			// TxResponse: Did the sending go OK?
 			if (rawBytes[5] != 0) {
 				addResponseToView("<< TX Failed: "
@@ -389,7 +478,7 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 			}
 			break;
 		default:
-			Log.e("WSNInterface", "Received a packet with an unknown packet type. Bytes: " + rawBytes);
+			logger.debug("Received a packet with an unknown packet type. Bytes: " + rawBytes);
 		}
 	}
 }

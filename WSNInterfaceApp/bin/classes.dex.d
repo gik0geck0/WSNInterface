@@ -3,12 +3,15 @@
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$drawable.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$1.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$id.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/NDResponse.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$3.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$attr.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$Looper$2.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$string.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/BuildConfig.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$Looper$3.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$2.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$xml.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$Looper$1.class \

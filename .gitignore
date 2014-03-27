@@ -4,3 +4,8 @@
 *.jar
 *.war
 *.ear
+
+*.apk
+*.ap_
+*.dex
+*.d

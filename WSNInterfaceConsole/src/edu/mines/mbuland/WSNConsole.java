@@ -12,6 +12,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.ObjectInputStream.GetField;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -23,31 +26,36 @@ import org.apache.log4j.SimpleLayout;
 import com.rapplogic.xbee.XBeeConnection;
 import com.rapplogic.xbee.api.AtCommand;
 import com.rapplogic.xbee.api.InputStreamThread;
+import com.rapplogic.xbee.api.PacketListener;
+import com.rapplogic.xbee.api.RemoteAtRequest;
 import com.rapplogic.xbee.api.XBee;
 import com.rapplogic.xbee.api.XBeeAddress16;
 import com.rapplogic.xbee.api.XBeeAddress64;
 import com.rapplogic.xbee.api.XBeeException;
 import com.rapplogic.xbee.api.XBeeResponse;
 import com.rapplogic.xbee.api.XBeeTimeoutException;
-import com.rapplogic.xbee.api.wpan.RxResponse;
-import com.rapplogic.xbee.api.wpan.RxResponse16;
-import com.rapplogic.xbee.api.wpan.RxResponse64;
 import com.rapplogic.xbee.api.wpan.TxRequest64;
 
-public class WSNConsole extends IOIOConsoleApp {
+public class WSNConsole extends IOIOConsoleApp implements PacketListener {
 	int[] data_in;
 	int[] old;
+	Logger logger;
 	
 	BlockingQueue<String> requestqueue;
 
 	// Boilerplate main(). Copy-paste this code into any IOIOapplication.
 	public static void main(String[] args) throws Exception {
-		
 		System.setProperty("ioio.SerialPorts", "/dev/IOIO0");
 		Logger.getRootLogger().addAppender(new ConsoleAppender(new SimpleLayout(), "System.out"));
-		Logger.getLogger(XBee.class).setLevel(Level.ERROR);
 		Logger.getLogger(InputStreamThread.class).setLevel(Level.ERROR);
+		Logger.getLogger("com.rapplogic.xbee.api").setLevel(Level.ERROR);
+		Logger.getLogger(XBee.class).setLevel(Level.ERROR);
 		new WSNConsole().go(args);
+	}
+	
+	WSNConsole() {
+		logger = Logger.getLogger(WSNConsole.class);
+		logger.setLevel(Level.DEBUG);
 	}
 
 	@Override
@@ -88,7 +96,7 @@ public class WSNConsole extends IOIOConsoleApp {
 			@Override
 			protected void setup() throws ConnectionLostException,
 					InterruptedException {
-				System.out.println("Running setup");
+				logger.info("Running setup");
 				uart = ioio_.openUart(rx, tx, baud, parity, stopbits);
 				input = uart.getInputStream();
 				output = uart.getOutputStream();
@@ -97,8 +105,6 @@ public class WSNConsole extends IOIOConsoleApp {
 					@Override public OutputStream getOutputStream() {
 						return output; }
 					@Override public InputStream getInputStream() {
-						try { System.out.println("Returning input stream with available: " + input.available());
-						} catch (IOException e) { e.printStackTrace(); }
 						return input; }
 					@Override public void close() {
 						try {
@@ -107,9 +113,9 @@ public class WSNConsole extends IOIOConsoleApp {
 				};
 
 				
-				System.out.println("Making new XBee");
+				logger.info("Making new XBee");
 				xbee = new XBee();
-				System.out.println("XBee made");
+				logger.info("XBee made");
 				final java.lang.Thread myThread = new java.lang.Thread(new Runnable() {
 					@Override
 					public void run() {
@@ -134,17 +140,18 @@ public class WSNConsole extends IOIOConsoleApp {
 						}
 					}
 				});
-				System.out.println("Forking a thread");
+				logger.info("Forking a thread");
 				myThread.start();
-				System.out.println("Thread forked");
+				logger.info("Thread forked");
 				try {
-					System.out.println("Initing new provider connection");
+					logger.info("Initing new provider connection");
 					xbee.initProviderConnection(xbconn);
 				} catch (XBeeException e) {
 					e.printStackTrace();
 				}
+				xbee.addPacketListener(WSNConsole.this);
 				
-				System.out.println("Setup Done");
+				logger.info("Setup Done");
 			}
 
 			@Override
@@ -174,13 +181,22 @@ public class WSNConsole extends IOIOConsoleApp {
 						 */
 						System.out.println(">> " + nextCommand);
 						if (nextCommand.startsWith("AT")) {
-							resp = xbee.sendSynchronous(new AtCommand(nextCommand.substring(2)));
-							System.out.println("AT" + nextCommand.substring(2) + " << " + resp);
+							xbee.sendAsynchronous(new AtCommand(nextCommand.substring(2)));
+							//System.out.println("AT" + nextCommand.substring(2) + " << " + resp);
+						} else if (nextCommand.startsWith("RAT")) {
+							// Send a remote AT Command to an MY
+							// RAT0001MY	// Asks MY 0001 what it's MY is (silly, I know)
+							String targetMY = nextCommand.substring(3, 7);
+							xbee.sendAsynchronous(new RemoteAtRequest(
+									new XBeeAddress16(
+											Integer.parseInt(nextCommand.substring(3, 5)),
+											Integer.parseInt(nextCommand.substring(5, 7))),
+									nextCommand.substring(7)));
 						} else {
 							TxRequest64 txr = new TxRequest64(new XBeeAddress64(0x00, 0x13, 0xA2, 0x00, 0x40, 0xA9, 0xA9, 0x0D), bytesToInts(nextCommand.getBytes()));
-							resp = xbee.sendSynchronous(txr);
+							xbee.sendAsynchronous(txr);
 							// Resp should contain the TX Response, indicating that the TX was successful
-							System.out.println("Fulfilled? " + resp);
+							/*
 							XBeeResponse dataresp = xbee.getResponse();
 							dataresp = xbee.getResponse();
 							// 68 65 6c 6c 6f 0d 0a
@@ -210,6 +226,7 @@ public class WSNConsole extends IOIOConsoleApp {
 							}
 							// System.out.println("bytes: " + intsToHex(databytes));
 							System.out.println("<< " + new String(intsToBytes(databytes)).trim());
+							*/
 						}
 					}
 				} catch (XBeeTimeoutException e) {
@@ -276,5 +293,299 @@ public class WSNConsole extends IOIOConsoleApp {
 			substr[put] = vals[pull];
 		}
 		return substr;
+	}
+	
+	private void addResponseToView(String message) {
+		System.out.println(message);
+	}
+
+	@Override
+	public void processResponse(XBeeResponse response) {
+		// Example Packet
+		// 00 0c 81 00 01 1c 02 68 65 6c 6c 6f 0d 0a 34
+		// _____ Payload length
+		// 		 __ Paylod Type (81 == Rx with 16bit address)
+		// 		 	_____ source address
+		// 00 0c 81 00 01 1c 02 68 65 6c 6c 6f 0d 0a 34
+		// 				  __ RSSI Receive value
+		// 				 	 __ +2 means PAN Broadcast +1 means address broadcast
+		// 						____________________ Packet bytes (h e l l o \r \n)
+		// 											 __ Checksum
+
+		int[] rawBytes = response.getProcessedPacketBytes();
+		// The payload describes everything after the header. Since I use the bytes directly, this is useless
+		// int payloadLength = (rawBytes[0] << 8) + rawBytes[1];
+		int payloadType = rawBytes[2];
+
+		logger.debug("Receive Packet: " + response);
+		logger.debug("Receive Raw Bytes: " + intsToHex(rawBytes));
+		// System.out.println(rawBytes.length + " bytes, and Payload length: " + payloadLength);
+
+		switch (payloadType) {
+
+		case 0x80:
+			// RxResponse with 64 bit address
+			addResponseToView("<< " 
+					+ arraySubstr(rawBytes, 3, 11)
+					+ " (-" + rawBytes[11] + "dBm)"
+					+ ": " 
+					+ intsToHex(arraySubstr(rawBytes, 13, -1)));
+			break;
+			
+		case 0x81:
+			// RxResponse with 16 bit address
+			addResponseToView("<< " 
+					+ arraySubstr(rawBytes, 3, 5)
+					+ " (-" + rawBytes[5] + "dBm)"
+					+ ": " 
+					+ intsToHex(arraySubstr(rawBytes, 7, -1)));
+			break;
+			
+		case 0x82:
+			// Input line states with 64 bit address
+			break;
+		case 0x83:
+			// Input line states with 16 bit address
+			break;
+		case 0x8a:
+			// Modem status packet
+			break;
+		case 0x97:
+			// Remote AT Response
+			// 3 == Packet Type
+			// [4,12) == 64 bit addr
+			// [12,14) == 16 bit addr
+			// [14,16) == AT Command Name
+			// [16] == Status
+			// [17,-1) == AT Payload
+				addResponseToView("<<RAT" + Integer.toHexString((rawBytes[12] << 8) + rawBytes[13]) + " "
+					+ (char) rawBytes[14] + (char) rawBytes[15]
+					+ ((rawBytes[16] == 0) ? "OK" : "ERROR")
+					+ ((rawBytes.length > 17) ? intsToHex(arraySubstr(rawBytes, 17, -1)) : ""));
+			break;
+
+		case 0x88:
+			// Local AT Response
+			if ((char) rawBytes[4] == 'N' && (char) rawBytes[5] == 'D') {
+                /*
+                 * ND: Node Discovery.
+                 * Response format: MY, SH, SL, DB and NI
+                 * 
+                 * MY: 2-byte ID
+                 * SH: first (highest) 32 bits of the serial number
+                 * SL: last (lowest) 32 bits of serial
+                 * DB: signal (dB) of last good packet
+                 * NI: Node identifier string
+                 * 
+                 * 0001 0013 a200 40a9 a90d 2c 20 00
+                 * ____ MY
+                 * 		_________ SH
+                 * 				  _________ SL
+                 * 							__ DB
+                 * 							   _____ NI (char*)
+                 * 
+                 * 
+                 */
+				ArrayList<NDResponse> foundNodes = new ArrayList<NDResponse>();
+				// System.out.println("Raw Bytes: " + rawBytes.length);
+				// System.out.println("Packet length: " + payloadLength);
+				
+				int byteIdx = 7;
+				// last byte is the checksum
+				while (byteIdx < rawBytes.length-1) {
+					NDResponse node = new NDResponse();
+					node.setMy((rawBytes[byteIdx]<<8) + rawBytes[byteIdx+1]);
+					byteIdx+=2;
+					
+					byte[] serialBytes = new byte[8];
+					serialBytes[0] = (byte) rawBytes[byteIdx+0];
+					serialBytes[1] = (byte) rawBytes[byteIdx+1];
+					serialBytes[2] = (byte) rawBytes[byteIdx+2];
+					serialBytes[3] = (byte) rawBytes[byteIdx+3];
+					serialBytes[4] = (byte) rawBytes[byteIdx+4];
+					serialBytes[5] = (byte) rawBytes[byteIdx+5];
+					serialBytes[6] = (byte) rawBytes[byteIdx+6];
+					serialBytes[7] = (byte) rawBytes[byteIdx+7];
+					node.setSerial(ByteBuffer.wrap(serialBytes).getLong());
+					byteIdx+=8;
+
+					node.setRssi(rawBytes[byteIdx]);
+					byteIdx++;
+
+					StringBuilder nibuilder = new StringBuilder();
+					while (rawBytes[byteIdx] != 0) {
+						nibuilder.append((char) rawBytes[byteIdx]);
+						byteIdx++;
+					}
+					byteIdx++;
+					node.setNi(nibuilder.toString());
+					foundNodes.add(node);
+					System.out.println(node);
+				}
+			} else {
+				addResponseToView("<<AT" + (char) rawBytes[4] + (char) rawBytes[5]
+					+ ((rawBytes[7] == 0) ? " " : " ERROR ")	// Say nothing on success
+					+ ((rawBytes.length > 8) ? intsToHex(arraySubstr(rawBytes, 8, -1)) : ""));
+			}
+			break;
+
+		case 0x89:
+			// TxResponse: Did the sending go OK?
+			if (rawBytes[5] != 0) {
+				addResponseToView("<< TX Failed: "
+					+ ((rawBytes[5] == 1) ? "No ACK received, and all retries exhausted"
+						: (rawBytes[5] == 2) ? "CCA Failure"
+							: (rawBytes[5] == 3) ? "Purged. Sleeping remote?"
+								: "Unknown error"));
+			}
+			break;
+		default:
+			logger.debug("Received a packet with an unknown packet type. Bytes: " + rawBytes);
+		}
+	}
+
+	@Override
+	public void processResponse(XBeeResponse response) {
+		// Example Packet
+		// 00 0c 81 00 01 1c 02 68 65 6c 6c 6f 0d 0a 34
+		// _____ Payload length
+		// 		 __ Paylod Type (81 == Rx with 16bit address)
+		// 		 	_____ source address
+		// 00 0c 81 00 01 1c 02 68 65 6c 6c 6f 0d 0a 34
+		// 				  __ RSSI Receive value
+		// 				 	 __ +2 means PAN Broadcast +1 means address broadcast
+		// 						____________________ Packet bytes (h e l l o \r \n)
+		// 											 __ Checksum
+
+		int[] rawBytes = response.getProcessedPacketBytes();
+		// The payload describes everything after the header. Since I use the bytes directly, this is useless
+		// int payloadLength = (rawBytes[0] << 8) + rawBytes[1];
+		int payloadType = rawBytes[2];
+
+		logger.debug("Receive Packet: " + response);
+		logger.debug("Receive Raw Bytes: " + intsToHex(rawBytes));
+		// System.out.println(rawBytes.length + " bytes, and Payload length: " + payloadLength);
+
+		switch (payloadType) {
+
+		case 0x80:
+			// RxResponse with 64 bit address
+			addResponseToView("<< " 
+					+ arraySubstr(rawBytes, 3, 11)
+					+ " (-" + rawBytes[11] + "dBm)"
+					+ ": " 
+					+ intsToHex(arraySubstr(rawBytes, 13, -1)));
+			break;
+			
+		case 0x81:
+			// RxResponse with 16 bit address
+			addResponseToView("<< " 
+					+ arraySubstr(rawBytes, 3, 5)
+					+ " (-" + rawBytes[5] + "dBm)"
+					+ ": " 
+					+ intsToHex(arraySubstr(rawBytes, 7, -1)));
+			break;
+			
+		case 0x82:
+			// Input line states with 64 bit address
+			break;
+		case 0x83:
+			// Input line states with 16 bit address
+			break;
+		case 0x8a:
+			// Modem status packet
+			break;
+		case 0x97:
+			// Remote AT Response
+			// 3 == Packet Type
+			// [4,12) == 64 bit addr
+			// [12,14) == 16 bit addr
+			// [14,16) == AT Command Name
+			// [16] == Status
+			// [17,-1) == AT Payload
+				addResponseToView("<<RAT" + Integer.toHexString((rawBytes[12] << 8) + rawBytes[13]) + " "
+					+ (char) rawBytes[14] + (char) rawBytes[15]
+					+ ((rawBytes[16] == 0) ? "OK" : "ERROR")
+					+ ((rawBytes.length > 17) ? intsToHex(arraySubstr(rawBytes, 17, -1)) : ""));
+			break;
+
+		case 0x88:
+			// Local AT Response
+			if ((char) rawBytes[4] == 'N' && (char) rawBytes[5] == 'D') {
+                /*
+                 * ND: Node Discovery.
+                 * Response format: MY, SH, SL, DB and NI
+                 * 
+                 * MY: 2-byte ID
+                 * SH: first (highest) 32 bits of the serial number
+                 * SL: last (lowest) 32 bits of serial
+                 * DB: signal (dB) of last good packet
+                 * NI: Node identifier string
+                 * 
+                 * 0001 0013 a200 40a9 a90d 2c 20 00
+                 * ____ MY
+                 * 		_________ SH
+                 * 				  _________ SL
+                 * 							__ DB
+                 * 							   _____ NI (char*)
+                 * 
+                 * 
+                 */
+				ArrayList<NDResponse> foundNodes = new ArrayList<NDResponse>();
+				// System.out.println("Raw Bytes: " + rawBytes.length);
+				// System.out.println("Packet length: " + payloadLength);
+				
+				int byteIdx = 7;
+				// last byte is the checksum
+				while (byteIdx < rawBytes.length-1) {
+					NDResponse node = new NDResponse();
+					node.setMy((rawBytes[byteIdx]<<8) + rawBytes[byteIdx+1]);
+					byteIdx+=2;
+					
+					byte[] serialBytes = new byte[8];
+					serialBytes[0] = (byte) rawBytes[byteIdx+0];
+					serialBytes[1] = (byte) rawBytes[byteIdx+1];
+					serialBytes[2] = (byte) rawBytes[byteIdx+2];
+					serialBytes[3] = (byte) rawBytes[byteIdx+3];
+					serialBytes[4] = (byte) rawBytes[byteIdx+4];
+					serialBytes[5] = (byte) rawBytes[byteIdx+5];
+					serialBytes[6] = (byte) rawBytes[byteIdx+6];
+					serialBytes[7] = (byte) rawBytes[byteIdx+7];
+					node.setSerial(ByteBuffer.wrap(serialBytes).getLong());
+					byteIdx+=8;
+
+					node.setRssi(rawBytes[byteIdx]);
+					byteIdx++;
+
+					StringBuilder nibuilder = new StringBuilder();
+					while (rawBytes[byteIdx] != 0) {
+						nibuilder.append((char) rawBytes[byteIdx]);
+						byteIdx++;
+					}
+					byteIdx++;
+					node.setNi(nibuilder.toString());
+					foundNodes.add(node);
+					Log.d("WSNInterface", "Found node: " + node + " Serial: " + Long.toHexString(node.getSerial()));
+				}
+			} else {
+				addResponseToView("<<AT" + (char) rawBytes[4] + (char) rawBytes[5]
+					+ ((rawBytes[7] == 0) ? " " : " ERROR ")	// Say nothing on success
+					+ ((rawBytes.length > 8) ? intsToHex(arraySubstr(rawBytes, 8, -1)) : ""));
+			}
+			break;
+
+		case 0x89:
+			// TxResponse: Did the sending go OK?
+			if (rawBytes[5] != 0) {
+				addResponseToView("<< TX Failed: "
+					+ ((rawBytes[5] == 1) ? "No ACK received, and all retries exhausted"
+						: (rawBytes[5] == 2) ? "CCA Failure"
+							: (rawBytes[5] == 3) ? "Purged. Sleeping remote?"
+								: "Unknown error"));
+			}
+			break;
+		default:
+			logger.debug("Received a packet with an unknown packet type. Bytes: " + rawBytes);
+		}
 	}
 }

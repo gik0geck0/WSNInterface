@@ -15,31 +15,33 @@
 	    	android:text="Target:" />
 	    
 	    <Spinner android:id="@+id/target_spinner"
-	        android:layout_width="wrap_content" 
+	        android:layout_width="0dp" 
+	        android:layout_weight="1"
 	    	android:layout_height="wrap_content" 
 	    	/>
 		
-        <Button
+        <Button android:id="@+id/refresh"
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content"
-            android:text="Refresh" 
-            android:id="@+id/refresh" />
+            android:text="Refresh" />
     </LinearLayout>
 
     <LinearLayout android:orientation="horizontal"
 	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content">
-	    <TextView android:layout_width="fill_parent" 
+
+	    <TextView android:id="@+id/is_connected_text"
+	        android:layout_width="fill_parent" 
 	    	android:layout_height="wrap_content" 
 	    	android:layout_weight="1"
-	    	android:text="IOIO Connected?"
-	    	android:id="@+id/is_connected_text" />
-	    <RadioButton android:layout_width="fill_parent"
+	    	android:text="IOIO Connected?" />
+
+	    <RadioButton android:id="@+id/is_connected"
+	        android:layout_width="fill_parent"
 	        android:layout_weight="1" 
 	    	android:layout_height="wrap_content" 
 	    	android:enabled="false"
-	    	android:clickable="false"
-	    	android:id="@+id/is_connected" />
+	    	android:clickable="false" />
     </LinearLayout>
 
 	<ListView android:layout_width="fill_parent" 
@@ -56,11 +58,10 @@
             android:hint="Send Command"
             android:id="@+id/commandentry"/>
         
-        <Button
+        <Button android:id="@+id/send"
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content"
-            android:text="Send" 
-            android:id="@+id/send" />
+            android:text="Send" />
 	</LinearLayout>
 	
 </LinearLayout>
