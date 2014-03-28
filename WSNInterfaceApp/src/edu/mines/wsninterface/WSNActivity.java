@@ -30,9 +30,11 @@ import android.widget.Spinner;
 
 import com.rapplogic.xbee.XBeeConnection;
 import com.rapplogic.xbee.api.AtCommand;
+import com.rapplogic.xbee.api.RemoteAtRequest;
 import com.rapplogic.xbee.api.PacketListener;
 import com.rapplogic.xbee.api.XBee;
 import com.rapplogic.xbee.api.XBeeAddress64;
+import com.rapplogic.xbee.api.XBeeAddress16;
 import com.rapplogic.xbee.api.XBeeException;
 import com.rapplogic.xbee.api.XBeeResponse;
 import com.rapplogic.xbee.api.wpan.TxRequest64;
@@ -49,7 +51,7 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 	private ArrayAdapter<String> responseAdapter;
 	
 	private Spinner targetSpinner;
-	private ArrayAdapter<String> targetAdapter;
+    private TargetNodeAdapter targetAdapter;
 
 	private RadioButton isConnected;
 	private Logger logger;
@@ -69,8 +71,8 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 		isConnected = (RadioButton) findViewById(R.id.is_connected);
 		
 		targetSpinner = (Spinner) findViewById(R.id.target_spinner);
-		targetAdapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_list_item_1);
+		targetAdapter = new TargetNodeAdapter(this);
+            // new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
 		targetSpinner.setAdapter(targetAdapter);
 
 		requestqueue = new ArrayBlockingQueue<String>(10);
@@ -226,7 +228,7 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
                         // Send a remote AT Command to an MY
                         // RAT0001MY	// Asks MY 0001 what it's MY is (silly, I know)
                         String targetMY = nextCommand.substring(3, 7);
-                        xbee.sendAsynchronous(new RemoteAtRequest(
+                        xb.sendAsynchronous(new RemoteAtRequest(
                                 new XBeeAddress16(
                                         Integer.parseInt(nextCommand.substring(3, 5)),
                                         Integer.parseInt(nextCommand.substring(5, 7))),
@@ -455,7 +457,7 @@ public class WSNActivity extends IOIOActivity implements PacketListener {
 					@Override public void run() {
 						targetAdapter.clear();
 						for (NDResponse nd : foundNodes) {
-							targetAdapter.add(nd.toString());
+							targetAdapter.add(nd);
 						}
 						targetAdapter.notifyDataSetChanged();
 					}});

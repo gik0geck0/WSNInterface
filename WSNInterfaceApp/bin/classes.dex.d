@@ -1,6 +1,6 @@
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes.dex : \
-/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/R.java.d \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$drawable.class \
+/home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/TargetNodeAdapter.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/WSNActivity$1.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/R$id.class \
 /home/gik0geck0/GitRepos/WSNInterface/WSNInterfaceApp/bin/classes/edu/mines/wsninterface/NDResponse.class \
