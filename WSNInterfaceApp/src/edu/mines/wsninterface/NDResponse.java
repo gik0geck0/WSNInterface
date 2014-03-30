@@ -1,5 +1,8 @@
 package edu.mines.wsninterface;
 
+import com.rapplogic.xbee.api.XBeeAddress16;
+import com.rapplogic.xbee.api.XBeeAddress64;
+
 public class NDResponse {
 	// 16 bit address
 	int my;
@@ -26,9 +29,17 @@ public class NDResponse {
 	public int getMy() {
 		return my;
 	}
+	
+	public XBeeAddress16 getMYAddr() {
+		return getMYAddr(my);
+	}
 
 	public long getSerial() {
 		return serial;
+	}
+
+	public XBeeAddress64 getSerialAddr() {
+		return getSerialAddr(serial);
 	}
 
 	public int getRssi() {
@@ -62,4 +73,20 @@ public class NDResponse {
 				// + " SA:" + Long.toHexString(serial)
 				+ " " + rssi + "dBm";
 	}
+	
+    public static XBeeAddress16 getMYAddr(int my) {
+    	return new XBeeAddress16((my >> 8) & 0xFF, my & 0xFF);
+    }
+
+    public static XBeeAddress64 getSerialAddr(long serial) {
+    	return new XBeeAddress64(
+    			(int) ((serial >> 56) & 0xFF),
+    			(int) ((serial >> 48) & 0xFF),
+    			(int) ((serial >> 40) & 0xFF),
+    			(int) ((serial >> 32) & 0xFF),
+    			(int) ((serial >> 24) & 0xFF),
+    			(int) ((serial >> 16) & 0xFF),
+    			(int) ((serial >> 8 ) & 0xFF),
+    			(int) ((serial >> 0 ) & 0xFF));
+    }
 }

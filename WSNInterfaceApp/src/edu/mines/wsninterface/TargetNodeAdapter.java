@@ -2,24 +2,24 @@ package edu.mines.wsninterface;
 
 import java.util.ArrayList;
 
+
 import android.content.Context;
-import android.database.Cursor;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
-
 import edu.mines.wsninterface.NDResponse;
 
 public class TargetNodeAdapter extends BaseAdapter {
 
     private ArrayList<NDResponse> mListItems;
     private LayoutInflater mLayoutInflater;
+    public static NDResponse BROADCASTRESPONSE = new NDResponse(0xFFFF, 0x0, 0x0, "Broadcast");
 
     public TargetNodeAdapter(Context context) {
         mListItems = new ArrayList<NDResponse>();
+        mListItems.add(BROADCASTRESPONSE);
 
         //get the layout inflater
         mLayoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -31,8 +31,8 @@ public class TargetNodeAdapter extends BaseAdapter {
     }
 
     @Override
-    public Object getItem(int i) {
-        return null;
+    public NDResponse getItem(int i) {
+        return mListItems.get(i);
     }
 
     @Override
@@ -46,6 +46,7 @@ public class TargetNodeAdapter extends BaseAdapter {
 
     public void clear() {
         mListItems.clear();
+        mListItems.add(BROADCASTRESPONSE);
     }
 
     @Override
@@ -70,6 +71,5 @@ public class TargetNodeAdapter extends BaseAdapter {
 
         //this method must return the view corresponding to the data at the specified position.
         return view;
-
     }
 }

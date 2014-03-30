@@ -44,10 +44,6 @@
 	    	android:clickable="false" />
     </LinearLayout>
 
-	<ListView android:layout_width="fill_parent" 
-    	android:layout_height="wrap_content"
-    	android:id="@+id/responses" />
-    
     <LinearLayout android:orientation="horizontal"
 	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content">
@@ -64,4 +60,8 @@
             android:text="Send" />
 	</LinearLayout>
 	
+	<ListView android:layout_width="fill_parent" 
+    	android:layout_height="wrap_content"
+    	android:id="@+id/responses" />
+    
 </LinearLayout>
