@@ -62,6 +62,6 @@
 	
 	<ListView android:layout_width="fill_parent" 
     	android:layout_height="wrap_content"
-    	android:id="@+id/responses" />
+    	android:id="@+id/response_listview" />
     
 </LinearLayout>

@@ -127,6 +127,10 @@ public class RxPacket /* extends XBeeResponse */ {
 		}
 	}
 	
+	/**
+	 * Translates this packet to a string. In most cases, it will consist of
+	 * some sort of header, followed by the hex representation of its bytes
+	 */
 	@Override
 	public String toString() {
 		if (packetType == PacketType.Rx16Response || packetType == PacketType.Rx64Response) {
