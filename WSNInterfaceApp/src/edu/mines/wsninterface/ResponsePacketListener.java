@@ -9,10 +9,13 @@ import com.rapplogic.xbee.api.PacketListener;
 import com.rapplogic.xbee.api.XBeeResponse;
 
 public class ResponsePacketListener implements PacketListener {
+	ArrayList<NDResponse> intermediateNodes;
 	PacketNotification recipient;
+	RxPacket incomplete_packet;
 	
 	ResponsePacketListener(PacketNotification recipient) {
 		this.recipient = recipient;
+		intermediateNodes = new ArrayList<NDResponse>();
 	}
 
 	@Override
@@ -34,29 +37,28 @@ public class ResponsePacketListener implements PacketListener {
 		int payloadType = rawBytes[2];
 
 		Log.d("WSNActivity", "Receive Packet: " + response);
-		Log.d("WSNActivity", "Receive Raw Bytes: " + PacketUtils.intsToHex(rawBytes));
+		Log.d("WSNActivity", "Receive Raw Bytes (" + rawBytes.length + ") : " + PacketUtils.intsToHex(rawBytes));
 		// System.out.println(rawBytes.length + " bytes, and Payload length: " + payloadLength);
 
 		switch (payloadType) {
 
+		// RxResponse: Could have a 16 bit addr OR a 64 bit addr
 		case 0x80:
-			// RxResponse with 64 bit address
-			recipient.receiveStringPacket("<< " 
-					+ new String(PacketUtils.intsToBytes(PacketUtils.arraySubstr(rawBytes, 3, 11)))
-					+ " (-" + rawBytes[11] + "dBm)"
-					+ ": " 
-					+ new String(PacketUtils.intsToBytes(PacketUtils.arraySubstr(rawBytes, 13, -1))));
-			break;
-			
 		case 0x81:
-			// RxResponse with 16 bit address
-			recipient.receiveStringPacket("<< " 
-					+ (new String(PacketUtils.intsToBytes(PacketUtils.arraySubstr(rawBytes, 3, 5))).trim())
-					+ " (-" + rawBytes[5] + "dBm)"
-					+ ": " 
-					+ new String(PacketUtils.intsToBytes(PacketUtils.arraySubstr(rawBytes, 7, -1))));
+			if (response.getProcessedPacketBytes().length == RxPacket.MAX_PACKET_LENGTH) {
+				Log.d("WSNInterface", "Found a packet of max length");
+				if (incomplete_packet == null) {
+					incomplete_packet = new RxPacket(response);
+				} else if (incomplete_packet.merge(new RxPacket(response))) {
+				}
+			} else if (incomplete_packet != null && incomplete_packet.merge(new RxPacket(response))) {
+				recipient.receivePacket(incomplete_packet);
+				incomplete_packet = null;
+			} else {
+                // RxResponse with 64 bit address
+                recipient.receivePacket(new RxPacket(response));
+			}
 			break;
-			
 		case 0x82:
 			// Input line states with 64 bit address
 			break;
@@ -74,15 +76,20 @@ public class ResponsePacketListener implements PacketListener {
 			// [14,16) == AT Command Name
 			// [16] == Status
 			// [17,-1) == AT Payload
-				recipient.receiveStringPacket("<<RAT" + Integer.toHexString((rawBytes[12] << 8) + rawBytes[13]) + " "
+			recipient.receivePacket(new RxPacket(response));
+					/*
+					"<<RAT" + Integer.toHexString((rawBytes[12] << 8) + rawBytes[13]) + " "
 					+ (char) rawBytes[14] + (char) rawBytes[15]
 					+ ((rawBytes[16] == 0) ? "OK" : "ERROR")
 					+ ((rawBytes.length > 17) ? PacketUtils.intsToHex(PacketUtils.arraySubstr(rawBytes, 17, -1)) : ""));
+					*/
 			break;
 
 		case 0x88:
 			// Local AT Response
 			if ((char) rawBytes[4] == 'N' && (char) rawBytes[5] == 'D') {
+				if (rawBytes[6] == 0)
+					recipient.receivePacket(new RxPacket(response));
                 /*
                  * ND: Node Discovery.
                  * Response format: MY, SH, SL, DB and NI
@@ -102,12 +109,20 @@ public class ResponsePacketListener implements PacketListener {
                  * 
                  * 
                  */
-				final ArrayList<NDResponse> foundNodes = new ArrayList<NDResponse>();
+				// final ArrayList<NDResponse> foundNodes = new ArrayList<NDResponse>();
 				// System.out.println("Raw Bytes: " + rawBytes.length);
 				// System.out.println("Packet length: " + payloadLength);
 				
 				int byteIdx = 7;
 				// last byte is the checksum
+
+				// At the end of node discover, there's an empty ND packet
+                if (byteIdx >= rawBytes.length-1) {
+                	Log.d("WSNActivity", "Received the empty ND packet. Updating the target nodes");
+                	recipient.foundNodesList(new ArrayList<NDResponse>(intermediateNodes));
+                	intermediateNodes.clear();
+                }
+
 				while (byteIdx < rawBytes.length-1) {
 					NDResponse node = new NDResponse();
 					node.setMy((rawBytes[byteIdx]<<8) + rawBytes[byteIdx+1]);
@@ -135,28 +150,31 @@ public class ResponsePacketListener implements PacketListener {
 					}
 					byteIdx++;
 					node.setNi(nibuilder.toString());
-					foundNodes.add(node);
+					intermediateNodes.add(node);
 					Log.d("WSNInterface", "Found node: " + node + " Serial: " + Long.toHexString(node.getSerial()));
 				}
-                if (!foundNodes.isEmpty()) {
-                	recipient.foundNodesList(foundNodes);
-                }
 
 			} else {
-				recipient.receiveStringPacket("<<AT" + (char) rawBytes[4] + (char) rawBytes[5]
+				recipient.receivePacket(new RxPacket(response));
+					/*
+					"<<AT" + (char) rawBytes[4] + (char) rawBytes[5]
 					+ ((rawBytes[7] == 0) ? " " : " ERROR ")	// Say nothing on success
 					+ ((rawBytes.length > 8) ? PacketUtils.intsToHex(PacketUtils.arraySubstr(rawBytes, 8, -1)) : ""));
+					*/
 			}
 			break;
 
 		case 0x89:
 			// TxResponse: Did the sending go OK?
 			if (rawBytes[4] != 0) {
-				recipient.receiveStringPacket("<< TX Failed: "
+				recipient.receivePacket(new RxPacket(response));
+					/*
+					"<< TX Failed: "
 					+ ((rawBytes[4] == 1) ? "No ACK received, and all retries exhausted"
 						: (rawBytes[4] == 2) ? "CCA Failure"
 							: (rawBytes[4] == 3) ? "Purged. Sleeping remote?"
 								: "Unknown error"));
+					*/
 			}
 			break;
 		default:

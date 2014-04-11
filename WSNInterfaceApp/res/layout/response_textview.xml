@@ -4,4 +4,5 @@
     android:id="@+id/list_item_text_view"
     android:textSize="12sp"
     android:textColor="#FFFFFF"
-    android:layout_marginLeft="3dp"/>
+    android:layout_marginLeft="3dp"
+	android:maxLines="2" />

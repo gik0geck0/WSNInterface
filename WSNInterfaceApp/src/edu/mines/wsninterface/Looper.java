@@ -52,7 +52,7 @@ class Looper extends BaseIOIOLooper {
 		parentPacketNotify = responseNotify;
 		setupSuccessNotify = successNotify;
 	}
-
+	
 	private Uart uart;
 	private int rxpin = 34;
 	private int txpin = 35;

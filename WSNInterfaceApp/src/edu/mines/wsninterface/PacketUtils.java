@@ -34,6 +34,14 @@ public class PacketUtils {
 		return sb.toString();
 	}
 
+	public static String bytesToHex(byte[] bytes) {
+		StringBuilder sb = new StringBuilder();
+		for (int val : bytes) {
+			sb.append(Integer.toHexString(val) + " ");
+		}
+		return sb.toString();
+	}
+
 	public static int[] arraySubstr(int[] vals, int start, int end) {
 		if (end < 0) {
 			end = vals.length + end;

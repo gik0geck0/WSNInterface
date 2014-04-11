@@ -27,7 +27,7 @@ public class WSNActivity extends IOIOActivity implements PacketNotification, Set
 	private Button sendButton;
 
 	private ListView responseView;
-	private ArrayAdapter<String> responseAdapter;
+	private PacketAdapter responseAdapter;
 	private Button refreshButton;
 	
 	private Looper ioioLooper;
@@ -76,7 +76,7 @@ public class WSNActivity extends IOIOActivity implements PacketNotification, Set
 		});
 
 		responseView = (ListView) findViewById(R.id.responses);
-		responseAdapter = new ArrayAdapter<String>(this, R.layout.response_textview);
+		responseAdapter = new PacketAdapter(this);
 		responseView.setAdapter(responseAdapter);
 
 		refreshButton = (Button) findViewById(R.id.refresh);
@@ -111,6 +111,16 @@ public class WSNActivity extends IOIOActivity implements PacketNotification, Set
 		return ioioLooper;
 	}
 
+	void addResponseToView(final RxPacket message) {
+		WSNActivity.this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				responseAdapter.insert(message, 0);
+				responseAdapter.notifyDataSetChanged();
+			}
+		});
+	}
+
 	void addResponseToView(final String message) {
 		WSNActivity.this.runOnUiThread(new Runnable() {
 			@Override
@@ -121,6 +131,11 @@ public class WSNActivity extends IOIOActivity implements PacketNotification, Set
 		});
 	}
 	
+	@Override
+	public void receivePacket(RxPacket packet) {
+		addResponseToView(packet);
+	}
+
 	@Override
 	public void receiveStringPacket(String packet) {
 		addResponseToView(packet);
@@ -137,9 +152,10 @@ public class WSNActivity extends IOIOActivity implements PacketNotification, Set
                 @Override public void run() {
                         targetAdapter.clear();
                         for (NDResponse nd : nodes) {
-                                targetAdapter.add(nd);
+                        	targetAdapter.add(nd);
                         }
                         targetAdapter.notifyDataSetChanged();
+                        Toast.makeText(getApplicationContext(), "Target list Refreshed!", Toast.LENGTH_SHORT).show();
                 }});
 	}
 	
