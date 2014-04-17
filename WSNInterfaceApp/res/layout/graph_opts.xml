@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/list_item"
+    android:gravity="center_vertical">
+
+    <LinearLayout android:id="@+id/fmt_layout"
+        android:layout_width="fill_parent"
+    	android:layout_height="fill_parent"
+    	android:orientation="horizontal" >
+    	
+        <TextView android:id="@+id/fmt_label"
+	        android:layout_width="fill_parent"
+    		android:layout_height="fill_parent"
+    		android:layout_weight="1"
+    		android:text="Format: "
+            />
+        
+        <Spinner android:id="@+id/fmt_spinner"
+	        android:layout_width="fill_parent"
+    		android:layout_height="fill_parent"
+    		android:layout_weight="1"
+    		android:entries="@array/data_format_choices"
+            />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/x_layout"
+        android:layout_width="fill_parent"
+    	android:layout_height="fill_parent"
+    	android:visibility="gone"
+    	android:orientation="horizontal" >
+
+        <TextView android:id="@+id/x_label"
+	        android:layout_width="fill_parent"
+    		android:layout_height="fill_parent"
+    		android:layout_weight="1"
+    		android:text="X Size: " />
+        
+        <EditText android:id="@+id/x_size"
+	        android:layout_width="fill_parent"
+    		android:layout_height="fill_parent"
+    		android:layout_weight="1"
+    		android:inputType="number"
+    		android:hint="Bytes per X value" />
+	</LinearLayout>
+
+    <LinearLayout android:id="@+id/y_layout"
+        android:layout_width="fill_parent"
+    	android:layout_height="fill_parent"
+    	android:orientation="horizontal" >
+
+        <TextView android:id="@+id/y_label"
+	        android:layout_width="fill_parent"
+    		android:layout_height="fill_parent"
+    		android:layout_weight="1"
+    		android:text="Y Size: " />
+        
+        <EditText android:id="@+id/y_size"
+	        android:layout_width="fill_parent"
+    		android:layout_height="fill_parent"
+    		android:layout_weight="1"
+    		android:inputType="number"
+    		android:hint="Bytes per Y value" />
+	</LinearLayout>
+</LinearLayout>

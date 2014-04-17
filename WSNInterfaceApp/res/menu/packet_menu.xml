@@ -4,5 +4,10 @@
 	    android:id="@+id/save_data"
 	    android:orderInCategory="100"
 	    android:title="@string/save_data" />
+
+	<item
+	    android:id="@+id/graph_data"
+	    android:orderInCategory="100"
+	    android:title="@string/graph_data" />
     
 </menu>

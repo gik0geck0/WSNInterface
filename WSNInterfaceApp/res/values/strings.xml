@@ -2,4 +2,10 @@
 <resources>
     <string name="app_name">WSNInterface</string>
     <string name="save_data">Save Data</string>
+    <string name="graph_data">Graph Data</string>
+
+    <string-array name="data_format_choices">
+        <item>Y_VALS_ONLY</item>
+        <item>XY_VALS_INTERLEAVED</item>
+    </string-array>
 </resources>
