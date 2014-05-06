@@ -15,9 +15,9 @@ seelog:
 	tail -F logout.txt | logcat-color
 
 connect:
-	adb connect 192.168.0.50
-	# adb connect 138.67.204.84
-	#adb connect 192.168.210.99
+	# adb connect 192.168.0.50
+	adb connect 138.67.192.213
+	# adb connect 192.168.210.99
 	# adb connect 192.168.1.16
 
 logcat:

@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Date;
 import java.util.List;
 
@@ -261,13 +262,11 @@ public class WSNActivity extends IOIOActivity implements PacketNotification, Set
 
 					// Check for blanks, and normalize to 1. However, if the chosen dataformat is Y_VALS_ONLY, then y will be 0
 					if (xwidth.getText().length() == 0)
-						xwidth.setText("1");
+						xwidth.setText("0");
 
-					if (ywidth.getText().length() == 0) {
-						if (formatSpinner.getSelectedItemPosition() == 0)
-							ywidth.setText("0");
-						else
-							ywidth.setText("1");
+					// Since the default is Y only, we expect it to have data
+					if (ywidth.getText().length() == 0 || Integer.parseInt(ywidth.getText().toString()) <= 0) {
+                        ywidth.setText("1");
 					}
 								
 					Log.d("WSNActivity", "Wrapping the data, then parsing");
@@ -378,7 +377,9 @@ public class WSNActivity extends IOIOActivity implements PacketNotification, Set
 	}
 	
 	public static double[] parseData(ByteBuffer bb, int xwidth, int ywidth) {
-		int datapoints = bb.capacity() / (xwidth + ywidth) * (ywidth>0 ? 2 : 1);
+		// Network byte order, and the same as arduino
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		int datapoints = bb.capacity() / (xwidth + ywidth) * (xwidth>0 ? 2 : 1);
 		double[] darr = new double[datapoints];
 		Log.d("WSNActivity", "Number of datapoints: " + datapoints);
 
